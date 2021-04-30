@@ -2,6 +2,7 @@ package it.polito.tdp.spellchecker;
 
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.ResourceBundle;
 import java.util.StringTokenizer;
@@ -46,6 +47,10 @@ public class FXMLController {
     @FXML
     private Label lblTempo;
 
+ // Flag to select dichotomic search
+ 	private final static boolean dichotomicSearch = false;
+ 	private final static boolean linearSearch = false;
+    
     @FXML
     void doClearText(ActionEvent event) {
     	
@@ -60,8 +65,8 @@ public class FXMLController {
     void doSpellCheck(ActionEvent event) {
     	
     	List<String> paroleInserite = new ArrayList<>();
-    	List<RichWord> paroleRiccheSbagliate = new ArrayList<>();
-    	//List<String> paroleSbagliate = new ArrayList<>();
+    	//List<String> paroleInserite = new LinkedList<>();
+    	List<RichWord> paroleRiccheSbagliate;
     	
     	this.txtErrori.clear();
     	this.lblNumErrori.setText(null);
@@ -78,6 +83,7 @@ public class FXMLController {
     	
     	String inserimento = this.txtTesto.getText().toLowerCase();
     	
+    	inserimento = inserimento.replaceAll("\n", " ");
     	inserimento = inserimento.replaceAll("[.,\\/#?!$%\\^&\\*;:{}=\\-_`~()\\[\\]\"]", "");
     	
     	//LO DIVIDO CON GLI SPAZI
@@ -100,8 +106,21 @@ public class FXMLController {
     		paroleInserite.add(parola);
     		
     	}
- 
-    	paroleRiccheSbagliate = this.dizionario.spellCheckText(paroleInserite);
+    	// commentiamo per implementazione con i tempi
+    	//paroleRiccheSbagliate = this.dizionario.spellCheckTextLinear(paroleInserite);
+    	
+    	long start = System.nanoTime();
+	
+		if (dichotomicSearch) {
+			paroleRiccheSbagliate = dizionario.spellCheckTextDichotomic(paroleInserite);
+		} else if (linearSearch) {
+    	//if (linearSearch) {
+			paroleRiccheSbagliate = dizionario.spellCheckTextLinear(paroleInserite);
+		} else {
+			paroleRiccheSbagliate = dizionario.spellCheckText(paroleInserite);
+		}
+		long end = System.nanoTime();
+    	
     	
     	/* NON SERVE SALVARE LE PAROLE SBAGLIATE POSSIAMO STAMPARE SUBITO
     	
@@ -131,6 +150,7 @@ public class FXMLController {
 		}
     	
     	this.lblNumErrori.setText("errori trovati: "+ paroleRiccheSbagliate.size());
+    	this.lblTempo.setText("Spell check completed in " + (end - start)/ 1E9 + " seconds");
     }
     
     public void setDictionary(Dictionary d) {
